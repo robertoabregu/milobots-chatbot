@@ -35,6 +35,14 @@ async def whatsapp_webhook(request: Request):
     session = memory.get_or_create_session(user_phone=user_phone)
     session_id = session["id"]
 
+    # 🔹 Si es el primer mensaje de la sesión → enviar bienvenida fija
+    if session.get("turn_count", 0) == 0:
+        welcome = "¡Hola! Soy *Milo*, el asistente de *Milo Bots* 🤖. ¿En qué puedo ayudarte hoy?"
+        send_whatsapp(user_phone, welcome)
+        dao.save_message(session_id=session_id, role="bot", text=welcome, extra={"welcome": True})
+        memory.touch_session(session_id)
+        return JSONResponse({"ok": True})
+
     # Guardar mensaje entrante
     dao.save_message(session_id=session_id, role="user", text=body, extra={"profile_name": profile_name, "wa_id": wa_id})
 

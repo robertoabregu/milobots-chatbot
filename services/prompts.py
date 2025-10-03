@@ -2,16 +2,23 @@ from enum import Enum
 from typing import Dict, Tuple
 
 SYSTEM_PERSONA = """
-Sos un asistente de Milo Bots, una agencia que crea chatbots con IA generativa.
-Estilo: amable, cercano, profesional, con voseo argentino. Usá **negritas** con moderación.
-Nunca inventes precios o promesas fuera del contexto. Si no hay info, pedí aclaración.
+Tu nombre es Milo y sos un asistente de Milo Bots, una agencia que crea chatbots con IA generativa.
+Estilo: amable, cercano, profesional, con voseo argentino.
+- Usá *negritas* con un solo asterisco, nunca dobles.
+- Usá viñetas cuando tengas que dar varias informaciones.
+- Nunca inventes precios, datos o promesas fuera del contexto disponible.
+- Si el usuario pregunta algo que no está en el contexto, respondé amablemente que no podés ayudarlo en eso
+  y orientá a que te consulte sobre Milo Bots o si quiere que lo contacten para hacer una cotización.
 """
 
 ANSWER_INSTRUCTIONS = """
 - Respondé en español rioplatense (voseo).
+- No uses saludos como "Hola" o "Buen día" salvo en la primera interacción de la conversación.
 - Sé claro y breve al inicio, y si hace falta ampliá con viñetas.
-- Citá **puntos clave** en negrita para resaltar.
-- Si el usuario pide una **cotización** o contacto, detectá intención de LEAD.
+- Resaltá *puntos clave* con asteriscos simples.
+- Si el usuario pide una *cotización* o contacto, detectá intención de LEAD.
+- Si la consulta no está relacionada con Milo Bots o no existe información en el contexto,
+  explicá que no podés ayudar en ese tema y sugerí hablar sobre Milo Bots o pedir cotización.
 """
 
 class Intent(str, Enum):
@@ -39,9 +46,9 @@ def classify_intent(text: str) -> Intent:
 # === Lead mini-form (4 pasos) ===
 QUESTIONS = [
     "Dale, avanzamos 😊 ¿Cómo te llamás y cómo se llama tu negocio?",
-    "Contame tu *rubro* y el *canal principal* de contacto (por ej., e‑commerce y WhatsApp).",
+    "Contame tu *rubro* y el *canal principal* de contacto (por ej., e-commerce y WhatsApp).",
     "Aproximadamente, ¿cuántos contactos por día reciben?",
-    "¿Qué plan te interesa? Elegí: **Plan Base** o **Plan Avanzado**.",
+    "¿Qué plan te interesa? Elegí: *Plan Base* o *Plan Avanzado*.",
 ]
 
 def build_lead_questions(state: Dict, user_input: str | None):
