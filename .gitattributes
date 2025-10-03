@@ -1,0 +1,24 @@
+# Fuerza a que todos los archivos de texto usen LF (Linux) en el repo
+* text=auto eol=lf
+
+# Archivos Python siempre LF
+*.py text eol=lf
+
+# Archivos de configuración y datos
+*.txt text eol=lf
+*.md  text eol=lf
+*.env.example text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# JSON también LF (ejemplo serviceAccountKey.json en tu máquina, aunque no lo subís)
+*.json text eol=lf
+
+# Evita normalización en binarios
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.whl binary
