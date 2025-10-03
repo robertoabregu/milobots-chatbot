@@ -1,0 +1,81 @@
+🧠 Información optimizada para vectorización – Milo Bots
+
+🟦 ¿Qué es Milo Bots?
+
+Milo Bots es una agencia especializada en la creación de chatbots conversacionales con inteligencia artificial generativa.
+Nos enfocamos en micro, pequeñas y medianas empresas que buscan automatizar su atención al cliente a través de canales como WhatsApp, web o redes sociales.
+Ofrecemos respuestas inmediatas, personalizadas y en el tono del negocio.
+
+🧰 Servicios que ofrecemos
+
+🟩 Plan Base:
+- Entrenamiento con la información del negocio (PDF, sitio web, etc.).
+- Canales: WhatsApp y/o Web.
+- Respuestas con el tono de voz de la marca.
+- Uso de embeddings + vector stores + RAG.
+- Memoria breve y posibilidad de derivar a un humano.
+- Reporte mensual simple.
+
+🟨 Plan Avanzado:
+- Incluye todo lo del Plan Base.
+- Integraciones personalizadas: CRM, e-commerce, pagos, reservas, etc.
+- Más canales disponibles: WhatsApp, Web, Instagram.
+- Embeddings + vector stores + RAG.
+- Reportes mensuales personalizados y más detallados.
+- Cronograma de trabajo adaptado a la complejidad del proyecto.
+
+💵 Precios
+
+- Demo inicial del chatbot: gratuita.
+- Plan Base: USD 499. Se abona 100% al confirmar el desarrollo.
+- Plan Avanzado: cotización por hora (USD 25/hora), según las automatizaciones requeridas. Se abona 100% al inicio.
+
+*Inicio del proyecto = momento posterior a la demo y confirmación del cliente para desarrollar el bot completo.*
+
+📄 Facturación y medios de pago
+
+- Se emite factura.
+- Pagos por transferencia bancaria o Mercado Pago.
+- Se puede abonar en USD o en pesos, al valor oficial del dólar del Banco Nación (último día hábil anterior).
+
+⏱️ Tiempos de entrega
+
+- Demo: 48 hs hábiles después de la reunión inicial.
+- Plan Base: entrega estimada en 7 días hábiles.
+- Plan Avanzado: depende del alcance del proyecto.
+
+📂 ¿Qué info necesito para entrenar el chatbot?
+
+Podemos usar cualquiera de estos formatos:
+- Documentos: PDF, Word, Excel, JSON, TXT, etc.
+- Sitios web públicos o privados (con acceso).
+
+🔌 Integraciones disponibles
+
+Podemos integrar el chatbot con sistemas externos vía API, como:
+- CRM
+- Plataformas de e-commerce
+- Procesadores de pagos
+- Sistemas de reservas
+- Bases de datos propias del cliente
+
+☎️ Canales y horarios de contacto
+
+- Horario de atención humana: lunes a viernes de 9 a 18 hs.
+- WhatsApp (atención 24 hs con el bot): +1 555 830 9002
+- Web: https://milobots.com
+
+🔄 Proceso de trabajo paso a paso
+
+1. Reunión inicial (máximo 1 hora) para definir alcance.
+2. Envío de información para entrenar el bot (docs, links, etc.).
+3. Entrenamiento y armado de la demo (48 hs hábiles).
+4. Presentación de la demo.
+5. Confirmación del cliente para avanzar con el desarrollo completo.
+6. Desarrollo del chatbot:
+   - 7 días hábiles aprox. para el Plan Base.
+   - A definir para el Plan Avanzado.
+7. Pruebas por parte del cliente.
+8. Puesta en producción.
+9. (Opcional) Transferencia del proyecto al cliente.
+10. Envío mensual de métricas del chatbot.
