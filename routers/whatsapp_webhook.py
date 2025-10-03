@@ -40,8 +40,10 @@ async def whatsapp_webhook(request: Request):
         welcome = "¡Hola! Soy *Milo*, el asistente de *Milo Bots* 🤖. ¿En qué puedo ayudarte hoy?"
         send_whatsapp(user_phone, welcome)
         dao.save_message(session_id=session_id, role="bot", text=welcome, extra={"welcome": True})
-        memory.touch_session(session_id)
+        # Incrementar contador de turnos
+        memory.update_session(session_id, {"turn_count": 1})
         return JSONResponse({"ok": True})
+
 
     # Guardar mensaje entrante
     dao.save_message(session_id=session_id, role="user", text=body, extra={"profile_name": profile_name, "wa_id": wa_id})
