@@ -35,16 +35,6 @@ async def whatsapp_webhook(request: Request):
     session = memory.get_or_create_session(user_phone=user_phone)
     session_id = session["id"]
 
-    # 🔹 Si es el primer mensaje de la sesión → enviar bienvenida fija
-    if session.get("turn_count", 0) == 0:
-        welcome = "¡Hola! Soy *Milo*, el asistente de *Milo Bots* 🤖. ¿En qué puedo ayudarte hoy?"
-        send_whatsapp(user_phone, welcome)
-        dao.save_message(session_id=session_id, role="bot", text=welcome, extra={"welcome": True})
-        # Incrementar contador de turnos
-        memory.update_session(session_id, {"turn_count": 1})
-        return JSONResponse({"ok": True})
-
-
     # Guardar mensaje entrante
     dao.save_message(session_id=session_id, role="user", text=body, extra={"profile_name": profile_name, "wa_id": wa_id})
 
@@ -56,9 +46,12 @@ async def whatsapp_webhook(request: Request):
         if finished:
             # Generar resumen y enviar notificación
             summary = build_lead_summary(session, updated_state)
-            notify_to = settings.LEADS_WHATSAPP_NUMBER or settings.ALERTS_WHATSAPP_NUMBER
+            notify_to = (settings.LEADS_WHATSAPP_NUMBER or settings.ALERTS_WHATSAPP_NUMBER or "").strip()
+
             if notify_to:
+                print(f"[DEBUG] Enviando lead a {notify_to} con mensaje:\n{summary}")
                 send_whatsapp(notify_to, summary)
+
             memory.update_session(session_id, {"lead_completed": True, "status": "lead"})
             reply = "¡Gracias! 🙌 Con estos datos ya te contactamos a la brevedad."
             send_whatsapp(user_phone, reply)
@@ -75,9 +68,10 @@ async def whatsapp_webhook(request: Request):
     if intent == Intent.GOODBYE:
         # Aviso sin avance si no hubo lead
         if not session.get("lead_completed"):
-            notify_to = settings.ALERTS_WHATSAPP_NUMBER or settings.LEADS_WHATSAPP_NUMBER
+            notify_to = (settings.ALERTS_WHATSAPP_NUMBER or settings.LEADS_WHATSAPP_NUMBER or "").strip()
             if notify_to and not session.get("alert_no_advance_sent"):
                 msg = f"👋 El cliente {user_phone} se despidió sin pedir cotización."
+                print(f"[DEBUG] Enviando alerta de no avance a {notify_to}:\n{msg}")
                 send_whatsapp(notify_to, msg)
                 memory.update_session(session_id, {"alert_no_advance_sent": True})
         reply = "¡Gracias por escribirnos! Cuando quieras seguimos por acá 🙂"
