@@ -9,17 +9,25 @@ def send_whatsapp(to_number: str, body: str):
     """
     Envía un mensaje de WhatsApp via Twilio.
     - to_number: puede venir como '+54911....' (agregamos 'whatsapp:' acá)
+    - from_: asegúrate que tenga también el prefijo 'whatsapp:'
     """
     if not to_number.startswith("whatsapp:"):
         to = f"whatsapp:{to_number}"
     else:
         to = to_number
 
-    client.messages.create(
-        from_=settings.TWILIO_WHATSAPP_FROM,
+    from_number = settings.TWILIO_WHATSAPP_FROM
+    if not from_number.startswith("whatsapp:"):
+        from_number = f"whatsapp:{from_number}"
+
+    msg = client.messages.create(
+        from_=from_number,
         to=to,
         body=body,
     )
+
+    # Log para debugging en Render
+    print(f"[Twilio] Mensaje enviado a {to}: {body[:50]}... SID={msg.sid}")
 
 async def validate_twilio_signature(request: Request) -> bool:
     """
@@ -32,7 +40,6 @@ async def validate_twilio_signature(request: Request) -> bool:
     validator = RequestValidator(settings.TWILIO_AUTH_TOKEN)
     signature = request.headers.get("X-Twilio-Signature", "")
     # Reconstruir URL absoluta
-    # OJO: fastapi Request.url incluye esquema/host real si está detrás de proxy bien configurado.
     url = settings.PUBLIC_BASE_URL.rstrip("/") + str(request.url.path)
     form = await request.form()
     form_data = dict(form)
