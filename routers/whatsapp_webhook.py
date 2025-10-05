@@ -28,6 +28,7 @@ async def whatsapp_webhook(request: Request):
     if not body or not from_raw:
         return JSONResponse({"ok": True, "ignored": True})
 
+    # Estandarizo número del usuario
     user_phone = from_raw.replace("whatsapp:", "")
     dao = FirestoreDAO()
     memory = MemoryService(dao=dao)
@@ -37,7 +38,7 @@ async def whatsapp_webhook(request: Request):
     # Guardar mensaje entrante
     dao.save_message(session_id=session_id, role="user", text=body, extra={"profile_name": profile_name, "wa_id": wa_id})
 
-    # Primera interacción → bienvenida personalizada
+    # Primera interacción → bienvenida
     if session.get("turns", 0) == 0:
         bienvenida = "¡Hola! Soy *Milo*, el asistente de *Milo Bots 🤖*. ¿En qué puedo ayudarte hoy?"
         send_whatsapp(user_phone, bienvenida)
@@ -51,15 +52,23 @@ async def whatsapp_webhook(request: Request):
         next_q, updated_state, finished = build_lead_questions(lead_state, user_input=body)
         memory.update_session(session_id, {"lead_state": updated_state})
         if finished:
+            # Construir resumen de lead
             summary = build_lead_summary(session, updated_state)
             notify_to = settings.LEADS_WHATSAPP_NUMBER or settings.ALERTS_WHATSAPP_NUMBER
 
-            # Intentar enviar mensaje libre y fallback a plantilla
             if notify_to:
-                sid = send_whatsapp(notify_to, summary)
-                if not sid:
-                    send_whatsapp_template(notify_to, "milobots_nuevo_lead_alerta2", [summary])
+                # Enviar SIEMPRE la plantilla oficial
+                params = [
+                    f"+{user_phone}",
+                    updated_state["answers"].get("q0", "-"),
+                    updated_state["answers"].get("q1", "-"),
+                    updated_state["answers"].get("q2", "-"),
+                    updated_state["answers"].get("q3", "-"),
+                ]
+                print(f"[DEBUG] Enviando plantilla milobots_nuevo_lead_alerta2 a {notify_to} con params: {params}")
+                send_whatsapp_template(notify_to, "milobots_nuevo_lead_alerta2", params)
 
+            # Confirmación al usuario
             memory.update_session(session_id, {"lead_completed": True, "status": "lead"})
             reply = "¡Gracias! 🙌 Con estos datos ya te contactamos a la brevedad."
             send_whatsapp(user_phone, reply)
@@ -98,7 +107,7 @@ async def whatsapp_webhook(request: Request):
     # Consultas informativas (RAG)
     reply, used_chunks = answer_with_rag(user_phone=user_phone, question=body)
 
-    # Validar si el RAG encontró info relevante o si fue tema fuera de contexto
+    # Respuesta fuera de contexto
     if not reply or re.search(r"no tengo información|no puedo ayudarte", reply, re.IGNORECASE):
         reply = (
             "No tengo información sobre ese tema 🤔. "
