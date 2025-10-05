@@ -58,7 +58,7 @@ async def whatsapp_webhook(request: Request):
             if notify_to:
                 sid = send_whatsapp(notify_to, summary)
                 if not sid:
-                    send_whatsapp_template(notify_to, "nuevo_lead_alerta", [summary])
+                    send_whatsapp_template(notify_to, "milobots_nuevo_lead_alerta2", [summary])
 
             memory.update_session(session_id, {"lead_completed": True, "status": "lead"})
             reply = "¡Gracias! 🙌 Con estos datos ya te contactamos a la brevedad."
