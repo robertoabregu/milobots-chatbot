@@ -7,7 +7,7 @@ from services.rag import answer_with_rag
 from services.prompts import classify_intent, Intent, build_lead_questions, build_lead_summary
 from firestore.dao import FirestoreDAO
 from datetime import datetime, timezone
-import re
+import logging
 
 router = APIRouter()
 
@@ -21,68 +21,69 @@ async def whatsapp_webhook(request: Request):
     form = await request.form()
     body = (form.get("Body") or "").strip()
     from_raw = (form.get("From") or "")
-    to_raw = (form.get("To") or "")
     profile_name = form.get("ProfileName") or ""
     wa_id = form.get("WaId") or ""
 
     if not body or not from_raw:
         return JSONResponse({"ok": True, "ignored": True})
 
-    # Estandarizo número del usuario
+    # Estandarizo el número del usuario (sin 'whatsapp:')
     user_phone = from_raw.replace("whatsapp:", "")
     dao = FirestoreDAO()
     memory = MemoryService(dao=dao)
+
+    # Obtener/crear sesión
     session = memory.get_or_create_session(user_phone=user_phone)
     session_id = session["id"]
 
     # Guardar mensaje entrante
     dao.save_message(session_id=session_id, role="user", text=body, extra={"profile_name": profile_name, "wa_id": wa_id})
 
-    # Primera interacción → bienvenida
-    if session.get("turns", 0) == 0:
-        bienvenida = "¡Hola! Soy *Milo*, el asistente de *Milo Bots 🤖*. ¿En qué puedo ayudarte hoy?"
-        send_whatsapp(user_phone, bienvenida)
-        dao.save_message(session_id=session_id, role="bot", text=bienvenida)
-        memory.update_session(session_id, {"turns": 1})
-        return JSONResponse({"ok": True})
-
-    # Flujo de lead activo
+    # Si estamos en flujo de LEAD (mini-form), gestionar pasos
     lead_state = session.get("lead_state", {})
     if lead_state.get("active"):
         next_q, updated_state, finished = build_lead_questions(lead_state, user_input=body)
         memory.update_session(session_id, {"lead_state": updated_state})
+
         if finished:
-            # Construir resumen de lead
+            # Generar resumen del lead
             summary = build_lead_summary(session, updated_state)
+            lead_data = updated_state.get("answers", {})
+
+            # Parámetros de plantilla (deben coincidir con {{1}}..{{5}})
+            params = [
+                user_phone,
+                lead_data.get("q0", "-"),
+                lead_data.get("q1", "-"),
+                lead_data.get("q2", "-"),
+                lead_data.get("q3", "-"),
+            ]
+
             notify_to = settings.LEADS_WHATSAPP_NUMBER or settings.ALERTS_WHATSAPP_NUMBER
 
             if notify_to:
-                # Enviar SIEMPRE la plantilla oficial
-                params = [
-                    f"+{user_phone}",
-                    updated_state["answers"].get("q0", "-"),
-                    updated_state["answers"].get("q1", "-"),
-                    updated_state["answers"].get("q2", "-"),
-                    updated_state["answers"].get("q3", "-"),
-                ]
-                print(f"[DEBUG] Enviando plantilla milobots_nuevo_lead_alerta2 a {notify_to} con params: {params}")
-                send_whatsapp_template(notify_to, "milobots_nuevo_lead_alerta2", params)
+                try:
+                    logging.debug(f"[DEBUG] Enviando plantilla milobots_nuevo_lead_alerta2 a {notify_to} con params: {params}")
+                    send_whatsapp_template(notify_to, params)
+                except Exception as e:
+                    logging.error(f"[ERROR] Falló envío de plantilla a {notify_to}: {e}")
+                    # Fallback → texto plano
+                    send_whatsapp(notify_to, summary)
 
-            # Confirmación al usuario
             memory.update_session(session_id, {"lead_completed": True, "status": "lead"})
             reply = "¡Gracias! 🙌 Con estos datos ya te contactamos a la brevedad."
             send_whatsapp(user_phone, reply)
             dao.save_message(session_id=session_id, role="bot", text=reply, extra={"lead_completed": True})
             return JSONResponse({"ok": True})
+
         else:
             send_whatsapp(user_phone, next_q)
             dao.save_message(session_id=session_id, role="bot", text=next_q, extra={"lead_flow": True})
             return JSONResponse({"ok": True})
 
-    # Clasificación de intención
+    # No estamos en flujo lead → clasificar intención
     intent = classify_intent(body)
 
-    # Despedida
     if intent == Intent.GOODBYE:
         if not session.get("lead_completed"):
             notify_to = settings.ALERTS_WHATSAPP_NUMBER or settings.LEADS_WHATSAPP_NUMBER
@@ -96,25 +97,16 @@ async def whatsapp_webhook(request: Request):
         memory.update_session(session_id, {"status": "closed"})
         return JSONResponse({"ok": True})
 
-    # Inicio de lead
     if intent == Intent.LEAD_INTENT:
+        # Inicializar flujo lead
         memory.update_session(session_id, {"lead_state": {"active": True, "step": 0, "answers": {}}, "status": "lead"})
         q, _, _ = build_lead_questions({"active": True, "step": 0, "answers": {}}, user_input=None)
         send_whatsapp(user_phone, q)
         dao.save_message(session_id=session_id, role="bot", text=q, extra={"lead_flow": True})
         return JSONResponse({"ok": True})
 
-    # Consultas informativas (RAG)
+    # Caso INFO_QUERY → RAG
     reply, used_chunks = answer_with_rag(user_phone=user_phone, question=body)
-
-    # Respuesta fuera de contexto
-    if not reply or re.search(r"no tengo información|no puedo ayudarte", reply, re.IGNORECASE):
-        reply = (
-            "No tengo información sobre ese tema 🤔. "
-            "Puedo ayudarte con *consultas sobre Milo Bots*, o si querés que te contacten "
-            "para una *cotización* de tu chatbot."
-        )
-
     send_whatsapp(user_phone, reply)
     dao.save_message(session_id=session_id, role="bot", text=reply, extra={"chunks_used": used_chunks})
     memory.touch_session(session_id)

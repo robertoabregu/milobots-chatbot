@@ -2,62 +2,73 @@ from config import settings
 from twilio.rest import Client
 from fastapi import Request
 from twilio.request_validator import RequestValidator
+import logging
+import json
 
+# Inicializo cliente Twilio
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
 
 def send_whatsapp(to_number: str, body: str):
     """
-    Envía un mensaje de WhatsApp libre (freeform) via Twilio.
-    Solo funciona dentro de la ventana de 24 hs desde la última interacción del usuario.
+    Envía un mensaje de WhatsApp via Twilio.
+    - 'to_number' puede venir como '+54911....' (se agrega 'whatsapp:' automáticamente)
     """
     if not to_number.startswith("whatsapp:"):
-        to_number = f"whatsapp:{to_number}"
+        to = f"whatsapp:{to_number}"
+    else:
+        to = to_number
 
     try:
         msg = client.messages.create(
             from_=settings.TWILIO_WHATSAPP_FROM,
-            to=to_number,
+            to=to,
             body=body,
         )
-        print(f"[Twilio] Mensaje enviado a {to_number}: {body} — SID={msg.sid}")
-        return msg.sid
+        logging.info(f"[Twilio] Mensaje enviado a {to}: {body} – SID={msg.sid}")
     except Exception as e:
-        print(f"[Twilio ERROR] No se pudo enviar mensaje a {to_number}: {e}")
-        return None
+        logging.error(f"[Twilio ERROR] No se pudo enviar mensaje a {to}: {e}")
 
 
-def send_whatsapp_template(to_number: str, template_name: str, parameters: list):
+def send_whatsapp_template(to_number: str, params: list):
     """
-    Envía un mensaje usando una plantilla aprobada de WhatsApp.
-    Útil cuando se quiere contactar a un usuario fuera de la ventana de 24 hs.
-    - template_name: nombre de la plantilla configurada en Meta/Twilio.
-    - parameters: lista de valores que reemplazan los {{1}}, {{2}}, etc.
+    Envía una plantilla de WhatsApp (Content Template) usando Twilio.
+    Usa el content_sid del template 'milobots_nuevo_lead_alerta2'.
+    Los parámetros deben coincidir con las variables {{1}}, {{2}}, etc.
     """
     if not to_number.startswith("whatsapp:"):
-        to_number = f"whatsapp:{to_number}"
+        to = f"whatsapp:{to_number}"
+    else:
+        to = to_number
+
+    # SID del template aprobado en Twilio
+    CONTENT_SID = "HX80dccae55dcbfc0cce3a3ae87e28b3fa"  # ⚠️ reemplazá con el SID completo exacto de tu plantilla
+
+    # Variables dinámicas del template (JSON string)
+    content_variables = {
+        "1": params[0],  # Cliente WhatsApp
+        "2": params[1],  # Nombre y negocio
+        "3": params[2],  # Rubro/canal
+        "4": params[3],  # Contactos por día
+        "5": params[4],  # Plan
+    }
 
     try:
-        msg = client.messages.create(
+        message = client.messages.create(
             from_=settings.TWILIO_WHATSAPP_FROM,
-            to=to_number,
-            messaging_product="whatsapp",
-            # Formato de plantilla (HSM)
-            template={
-                "name": template_name,
-                "language": {"code": "es"},
-                "components": [
-                    {
-                        "type": "body",
-                        "parameters": [{"type": "text", "text": p} for p in parameters],
-                    }
-                ],
-            },
+            to=to,
+            content_sid=CONTENT_SID,
+            content_variables=json.dumps(content_variables),
         )
-        print(f"[Twilio] Plantilla '{template_name}' enviada a {to_number} — SID={msg.sid}")
-        return msg.sid
+
+        logging.info(
+            f"[Twilio] ✅ Plantilla 'milobots_nuevo_lead_alerta2' enviada correctamente a {to} con parámetros {params} – SID={message.sid}"
+        )
+
     except Exception as e:
-        print(f"[Twilio ERROR] No se pudo enviar plantilla '{template_name}' a {to_number}: {e}")
-        return None
+        logging.error(
+            f"[Twilio ERROR] No se pudo enviar plantilla 'milobots_nuevo_lead_alerta2' a {to}: {e}"
+        )
 
 
 async def validate_twilio_signature(request: Request) -> bool:
@@ -73,6 +84,7 @@ async def validate_twilio_signature(request: Request) -> bool:
     url = settings.PUBLIC_BASE_URL.rstrip("/") + str(request.url.path)
     form = await request.form()
     form_data = dict(form)
+
     try:
         return validator.validate(url, form_data, signature)
     except Exception:
