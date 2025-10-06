@@ -33,24 +33,21 @@ def send_whatsapp(to_number: str, body: str):
 def send_whatsapp_template(to_number: str, params: list):
     """
     Envía una plantilla de WhatsApp (Content Template) usando Twilio.
-    Usa el content_sid del template 'milobots_nuevo_lead_alerta2'.
-    Los parámetros deben coincidir con las variables {{1}}, {{2}}, etc.
+    Usa el content_sid del template 'milobots_nuevo_lead_alerta5'.
+    Los parámetros deben coincidir con las variables {{1}} y {{2}} del template.
     """
     if not to_number.startswith("whatsapp:"):
         to = f"whatsapp:{to_number}"
     else:
         to = to_number
 
-    # SID del template aprobado en Twilio
-    CONTENT_SID = "HX80dccae55dcbfc0cce3a3ae87e28b3fa"  # ⚠️ reemplazá con el SID completo exacto de tu plantilla
+    # SID del template aprobado en Twilio (nuevo formato Utility)
+    CONTENT_SID = "HX97342ca0721700a6ea4721aee7d15025"  # ⚠️ usá el SID exacto del template 'milobots_nuevo_lead_alerta5'
 
-    # Variables dinámicas del template (JSON string)
+    # Variables dinámicas del template (solo 2)
     content_variables = {
         "1": params[0],  # Cliente WhatsApp
         "2": params[1],  # Nombre y negocio
-        "3": params[2],  # Rubro/canal
-        "4": params[3],  # Contactos por día
-        "5": params[4],  # Plan
     }
 
     try:
@@ -62,12 +59,12 @@ def send_whatsapp_template(to_number: str, params: list):
         )
 
         logging.info(
-            f"[Twilio] ✅ Plantilla 'milobots_nuevo_lead_alerta2' enviada correctamente a {to} con parámetros {params} – SID={message.sid}"
+            f"[Twilio] ✅ Plantilla 'milobots_nuevo_lead_alerta5' enviada correctamente a {to} con parámetros {params} – SID={message.sid}"
         )
 
     except Exception as e:
         logging.error(
-            f"[Twilio ERROR] No se pudo enviar plantilla 'milobots_nuevo_lead_alerta2' a {to}: {e}"
+            f"[Twilio ERROR] No se pudo enviar plantilla 'milobots_nuevo_lead_alerta5' a {to}: {e}"
         )
 
 
