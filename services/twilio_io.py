@@ -43,7 +43,7 @@ def send_whatsapp_template(to_number: str, params: list):
         to = to_number
 
     # SID del template aprobado en Twilio (Utility)
-    CONTENT_SID = "HX97342ca0721700a6ea4721ae5d23691"  # ⚠️ reemplazá con el SID exacto que aparece en Twilio
+    CONTENT_SID = "HXdb8083414adc340bcb3bb6094784513e"  # ⚠️ reemplazá con el SID exacto que aparece en Twilio
 
     # Variables dinámicas del template
     content_variables = {
@@ -60,12 +60,12 @@ def send_whatsapp_template(to_number: str, params: list):
         )
 
         logging.info(
-            f"[Twilio] ✅ Plantilla 'milobots_nuevo_lead_alerta5' enviada correctamente a {to} con parámetros {params} – SID={message.sid}"
+            f"[Twilio] ✅ Plantilla 'milobots_nuevo_lead_alerta6' enviada correctamente a {to} con parámetros {params} – SID={message.sid}"
         )
 
     except Exception as e:
         logging.error(
-            f"[Twilio ERROR] ❌ No se pudo enviar plantilla 'milobots_nuevo_lead_alerta5' a {to}: {e}"
+            f"[Twilio ERROR] ❌ No se pudo enviar plantilla 'milobots_nuevo_lead_alerta6' a {to}: {e}"
         )
 
 
