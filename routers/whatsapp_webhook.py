@@ -68,7 +68,7 @@ async def whatsapp_webhook(request: Request):
                         to_number=notify_to,
                         params=[cliente_whatsapp, nombre_negocio]
                     )
-                    logging.info(f"[DEBUG] 📩 Enviada plantilla milobots_nuevo_lead_alerta5 a {notify_to}")
+                    logging.info(f"[DEBUG] 📩 Enviada plantilla milobots_nuevo_lead_alerta6 a {notify_to}")
 
                 except Exception as e:
                     logging.error(f"[Twilio ERROR] No se pudo enviar plantilla de alerta: {e}")
