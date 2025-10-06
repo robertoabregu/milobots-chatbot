@@ -11,8 +11,7 @@ client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
 def send_whatsapp(to_number: str, body: str):
     """
-    Envía un mensaje de WhatsApp via Twilio.
-    - 'to_number' puede venir como '+54911....' (se agrega 'whatsapp:' automáticamente)
+    Envía un mensaje de WhatsApp libre via Twilio (solo válido dentro de la ventana de 24 hs).
     """
     if not to_number.startswith("whatsapp:"):
         to = f"whatsapp:{to_number}"
@@ -25,26 +24,28 @@ def send_whatsapp(to_number: str, body: str):
             to=to,
             body=body,
         )
-        logging.info(f"[Twilio] Mensaje enviado a {to}: {body} – SID={msg.sid}")
+        logging.info(f"[Twilio] Mensaje libre enviado a {to}: {body} – SID={msg.sid}")
     except Exception as e:
-        logging.error(f"[Twilio ERROR] No se pudo enviar mensaje a {to}: {e}")
+        logging.error(f"[Twilio ERROR] No se pudo enviar mensaje libre a {to}: {e}")
 
 
 def send_whatsapp_template(to_number: str, params: list):
     """
     Envía una plantilla de WhatsApp (Content Template) usando Twilio.
-    Usa el content_sid del template 'milobots_nuevo_lead_alerta5'.
-    Los parámetros deben coincidir con las variables {{1}} y {{2}} del template.
+    Usa el template aprobado 'milobots_nuevo_lead_alerta5' (tipo Utility).
+    Solo requiere dos parámetros:
+      params[0] = número del cliente WhatsApp
+      params[1] = nombre y negocio
     """
     if not to_number.startswith("whatsapp:"):
         to = f"whatsapp:{to_number}"
     else:
         to = to_number
 
-    # SID del template aprobado en Twilio (nuevo formato Utility)
-    CONTENT_SID = "HX97342ca0721700a6ea4721aee7d15025"  # ⚠️ usá el SID exacto del template 'milobots_nuevo_lead_alerta5'
+    # SID del template aprobado en Twilio (Utility)
+    CONTENT_SID = "HX97342ca0721700a6ea4721ae5d23691"  # ⚠️ reemplazá con el SID exacto que aparece en Twilio
 
-    # Variables dinámicas del template (solo 2)
+    # Variables dinámicas del template
     content_variables = {
         "1": params[0],  # Cliente WhatsApp
         "2": params[1],  # Nombre y negocio
@@ -64,7 +65,7 @@ def send_whatsapp_template(to_number: str, params: list):
 
     except Exception as e:
         logging.error(
-            f"[Twilio ERROR] No se pudo enviar plantilla 'milobots_nuevo_lead_alerta5' a {to}: {e}"
+            f"[Twilio ERROR] ❌ No se pudo enviar plantilla 'milobots_nuevo_lead_alerta5' a {to}: {e}"
         )
 
 

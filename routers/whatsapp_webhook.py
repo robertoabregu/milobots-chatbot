@@ -8,6 +8,7 @@ from services.prompts import classify_intent, Intent, build_lead_questions, buil
 from services.google_sheets import append_conversation_row
 from firestore.dao import FirestoreDAO
 from datetime import datetime, timezone
+import logging
 
 router = APIRouter()
 
@@ -49,26 +50,32 @@ async def whatsapp_webhook(request: Request):
         next_q, updated_state, finished = build_lead_questions(lead_state, user_input=body)
         memory.update_session(session_id, {"lead_state": updated_state})
         if finished:
-            # Generar resumen y enviar notificación
+            # Generar resumen y enviar notificación con template
             summary = build_lead_summary(session, updated_state)
             notify_to = settings.LEADS_WHATSAPP_NUMBER or settings.ALERTS_WHATSAPP_NUMBER
 
             if notify_to:
-                send_whatsapp(notify_to, summary)
+                # Extraigo datos relevantes para las variables del template
+                a = updated_state.get("answers", {})
+                cliente_whatsapp = user_phone
+                nombre_negocio = a.get("q0", "Sin nombre")
+
+                try:
+                    from services.twilio_io import send_whatsapp_template
+
+                    # Enviamos usando el nuevo template aprobado
+                    send_whatsapp_template(
+                        to_number=notify_to,
+                        params=[cliente_whatsapp, nombre_negocio]
+                    )
+                    logging.info(f"[DEBUG] 📩 Enviada plantilla milobots_nuevo_lead_alerta5 a {notify_to}")
+
+                except Exception as e:
+                    logging.error(f"[Twilio ERROR] No se pudo enviar plantilla de alerta: {e}")
 
             memory.update_session(session_id, {"lead_completed": True, "status": "lead"})
             reply = "¡Gracias! 🙌 Con estos datos ya te contactamos a la brevedad."
             send_whatsapp(user_phone, reply)
-
-            # Registrar en Sheets
-            append_conversation_row(
-                SHEET_ID,
-                user_phone=user_phone,
-                user_input=body,
-                bot_reply=reply,
-                contact_type="Lead"
-            )
-
             dao.save_message(session_id=session_id, role="bot", text=reply, extra={"lead_completed": True})
             return JSONResponse({"ok": True})
         else:
